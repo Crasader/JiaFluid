@@ -12,9 +12,10 @@
 
 # Build results
 [Dd]ebug/
-#[Dd]ebug.win32/
+[Dd]ebug.win32/
 [Dd]ebugPublic/
 [Rr]elease/
+[Rr]elease.win32/
 [Rr]eleases/
 x64/
 x86/
