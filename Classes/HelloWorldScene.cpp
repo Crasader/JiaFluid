@@ -1,5 +1,6 @@
 #include "HelloWorldScene.h"
 #include "SimpleAudioEngine.h"
+#include "Utils/utils.h"
 
 USING_NS_CC;
 
@@ -20,7 +21,7 @@ bool HelloWorld::init()
 {
     //////////////////////////////
     // 1. super init first
-    if ( !Scene::init() )
+    if ( !Scene::initWithPhysics() )
     {
         return false;
     }
@@ -77,23 +78,40 @@ bool HelloWorld::init()
         this->addChild(label, 1);
     }
 
-    // add "HelloWorld" splash screen"
-    auto sprite = Sprite::create("HelloWorld.png");
-    if (sprite == nullptr)
-    {
-        problemLoading("'HelloWorld.png'");
-    }
-    else
-    {
-        // position the sprite on the center of the screen
-        sprite->setPosition(Vec2(visibleSize.width/2 + origin.x, visibleSize.height/2 + origin.y));
+    
 
-        // add the sprite as a child to this layer
-        this->addChild(sprite, 0);
-    }
+	_emitter = ParticleSystemExtended::create();
+	_emitter->retain();
+	this->addChild(_emitter, 10);
+
+	auto p = _emitter->getPosition();
+	_emitter->setPosition(Vec2(p.x, p.y));
+	_emitter->setLife(4);
+
+	auto s = Director::getInstance()->getWinSize();
+	_emitter->setPosition(Vec2(s.width / 2, s.height / 2));
+
+	//this->addChild(makeBox(Vec2(100, 100), Size(100, 100)), 9);
+
     return true;
 }
 
+
+Sprite* HelloWorld::makeBox(Vec2 point, Size size, int color, PhysicsMaterial material)
+{
+
+	auto box = Sprite::createWithTexture(getDefaultTexture());
+	box->setScaleX(size.width / box->getContentSize().width);
+	box->setScaleY(size.height / box->getContentSize().height);
+
+	auto body = PhysicsBody::createBox(box->getContentSize(), material);
+	body->setGravityEnable(false);
+	box->addComponent(body);
+
+	box->setPosition(Vec2(point.x, point.y));
+
+	return box;
+}
 
 void HelloWorld::menuCloseCallback(Ref* pSender)
 {
