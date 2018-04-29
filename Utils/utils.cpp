@@ -72,3 +72,19 @@ Texture2D* getDefaultTexture()
 
     return texture;
 }
+
+PosArray fillRectWithPoints(cocos2d::Rect rect, double spacing) {
+    PosArray points;
+    double dx = spacing;
+    double dy = spacing / 2.0 * std::sqrt(3);
+    bool flag = false;
+    for (double y = rect.getMinY(); y < rect.getMaxY(); y += dy) {
+        double startingX = rect.getMinX();
+        if (flag)
+            startingX += spacing / 2.0;
+        for (double x = startingX; x < rect.getMaxX(); x += dx) {
+            points.push_back(Vec2(x, y));
+        }
+    }
+    return points;
+}

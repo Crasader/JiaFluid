@@ -5,11 +5,11 @@
 #include "2d/CCParticleSystemQuad.h"
 #include "SphKernel.h"
 
-typedef std::vector<cocos2d::Vec2> PosArray;
-
 class ParticlePhysicsData {
 public:
     ParticlePhysicsData();
+
+    cocos2d::ParticleData* basics;
 
     float* posx;
     float* posy;
@@ -19,6 +19,7 @@ public:
     float* forceY;
     float* density;
     float* pressure;
+    float* mass;
     float particleMass;
     float particleSpacing;
     float kernelRadius;
@@ -28,16 +29,25 @@ public:
 
     unsigned int maxCount;
     unsigned int curCount;
-    bool init(int count, float radius = 10.0f, float rdensity = 3.0, SphKernel *kernel = SphPoly6Kernel2::create());
+    bool init(cocos2d::ParticleData* basicData, int count, float radius = 10.0f, float rdensity = 3.0, SphKernel *kernel = SphPoly6Kernel2::create());
     void release();
     unsigned int getMaxCount() { return maxCount; }
 
-    bool addParticle(cocos2d::Vec2 p);
-    unsigned int fillRect(cocos2d::Rect rect);
+    void copyParticle(int p1, int p2)
+    {
+        basics->copyParticle(p1, p2);
+
+        velocityX[p1] = velocityX[p2];
+        velocityY[p1] = velocityY[p2];
+        forceX[p1] = forceX[p2];
+        forceY[p1] = forceY[p2];
+        density[p1] = density[p2];
+        pressure[p1] = pressure[p2];
+        mass[p1] = mass[p2];
+    }
 
 private:
     bool initMass();
-    PosArray fillRectWithPoints(cocos2d::Rect rect, double spacing);
 };
 
 class ParticleSystemExtended : public cocos2d::ParticleSystemQuad {
@@ -64,10 +74,12 @@ public:
     bool init() { return initWithTotalParticles(30000); }
     virtual bool initWithTotalParticles(int numberOfParticles);
 
+    bool addParticle(cocos2d::Vec2 p);
+    unsigned int fillRect(cocos2d::Rect rect);
+
     virtual void update(float dt) override;
 
 private:
-    bool syncData(unsigned int n);
 
     CC_DISALLOW_COPY_AND_ASSIGN(ParticleSystemExtended);
 

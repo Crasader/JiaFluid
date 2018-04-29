@@ -10,7 +10,7 @@ ParticlePhysicsData::ParticlePhysicsData()
     memset(this, 0, sizeof(ParticlePhysicsData));
 }
 
-bool ParticlePhysicsData::init(int count, float radius, float rdensity, SphKernel *kernel)
+bool ParticlePhysicsData::init(ParticleData* basicData, int count, float radius, float rdensity, SphKernel *kernel)
 {
     curCount = 0;
     maxCount = count;
@@ -19,60 +19,18 @@ bool ParticlePhysicsData::init(int count, float radius, float rdensity, SphKerne
     restDensity = rdensity;
     sphKernel = kernel;
     sphKernel->setRadius(radius);
-    posx = (float*)malloc(count * sizeof(float));
-    posy = (float*)malloc(count * sizeof(float));
+    basics = basicData;
+    posx = basics->posx;
+    posy = basics->posy;
     velocityX = (float*)malloc(count * sizeof(float));
     velocityY = (float*)malloc(count * sizeof(float));
     forceX = (float*)malloc(count * sizeof(float));
     forceY = (float*)malloc(count * sizeof(float));
     density = (float*)malloc(count * sizeof(float));
     pressure = (float*)malloc(count * sizeof(float));
+    mass = (float*)malloc(count * sizeof(float));
 
-    return velocityX && velocityY && forceX && forceY && density && pressure && initMass();
-}
-
-PosArray ParticlePhysicsData::fillRectWithPoints(cocos2d::Rect rect, double spacing) {
-    PosArray points;
-    double dx = spacing;
-    double dy = spacing / 2.0 * std::sqrt(3);
-    bool flag = false;
-    for (double y = rect.getMinY(); y < rect.getMaxY(); y += dy) {
-        double startingX = rect.getMinX();
-        if (flag)
-            startingX += spacing / 2.0;
-        for (double x = startingX; x < rect.getMaxX(); x += dx) {
-            points.push_back(Vec2(x, y));
-        }
-    }
-    return points;
-}
-
-unsigned int ParticlePhysicsData::fillRect(Rect rect) {
-    auto points = fillRectWithPoints(rect, particleSpacing);
-    unsigned int total = 0;
-    for (size_t i = 0, j = curCount; i < points.size() ; i++) {
-        if (addParticle(points[i])) {
-            total++;
-        }
-    }
-    return total;
-}
-
-bool ParticlePhysicsData::addParticle(Vec2 p) {
-    if (curCount >= maxCount) {
-        return false;
-    }
-
-    posx[curCount] = p.x;
-    posy[curCount] = p.y;
-    velocityX[curCount] = 0;
-    velocityY[curCount] = 0;
-    forceX[curCount] = 0;
-    forceY[curCount] = 0;
-    density[curCount] = 0;
-    pressure[curCount] = 0;
-    curCount++;
-    return true;
+    return velocityX && velocityY && forceX && forceY && density && pressure && mass && initMass();
 }
 
 bool ParticlePhysicsData::initMass() {
@@ -139,7 +97,7 @@ bool ParticleSystemExtended::initWithTotalParticles(int numberOfParticles)
 {
     if (ParticleSystemQuad::initWithTotalParticles(numberOfParticles))
     {
-        _particlePhysicsData.init(numberOfParticles);
+        _particlePhysicsData.init(&_particleData, numberOfParticles);
 
         // duration
         _duration = DURATION_INFINITY;
@@ -219,22 +177,116 @@ bool ParticleSystemExtended::initWithTotalParticles(int numberOfParticles)
     return false;
 }
 
-bool ParticleSystemExtended::syncData(unsigned int n) {
-    addParticles(n);
-    for (int i = n ; i >= 1; i--) {
-        _particleData.posx[_particleCount - i] = _particlePhysicsData.posx[_particlePhysicsData.curCount - i];
-        _particleData.posy[_particleCount - i] = _particlePhysicsData.posy[_particlePhysicsData.curCount - i];
-
+bool ParticleSystemExtended::addParticle(Vec2 p) {
+    if (_particlePhysicsData.curCount >= _particlePhysicsData.maxCount) {
+        return false;
     }
+
+    addParticles(1);
+    _particleData.posx[_particleCount - 1] = p.x;
+    _particleData.posy[_particleCount - 1] = p.y;
+    
+    _particlePhysicsData.velocityX[_particleCount - 1] = 0;
+    _particlePhysicsData.velocityY[_particleCount - 1] = 0;
+    _particlePhysicsData.forceX[_particleCount - 1] = 0;
+    _particlePhysicsData.forceY[_particleCount - 1] = 0;
+    _particlePhysicsData.density[_particleCount - 1] = 0;
+    _particlePhysicsData.pressure[_particleCount - 1] = 0;
+    _particlePhysicsData.mass[_particleCount - 1] = _particlePhysicsData.particleMass;
+    _particlePhysicsData.curCount = _particleCount;
     return true;
+}
+
+
+unsigned int ParticleSystemExtended::fillRect(Rect rect) {
+    auto points = fillRectWithPoints(rect, _particlePhysicsData.particleSpacing);
+    unsigned int total = 0;
+    for (size_t i = 0, j = _particlePhysicsData.curCount; i < points.size(); i++) {
+        if (addParticle(points[i])) {
+            total++;
+        }
+    }
+    return total;
 }
 
 void ParticleSystemExtended::update(float dt)
 {
+    CC_PROFILER_START_CATEGORY(kProfilerCategoryParticles, "ParticleSystemExtended - update");
+
     if (_nFrames == 0) {
-        unsigned int nAdded = _particlePhysicsData.fillRect(Rect(-100, -100, 240, 240));
-        syncData(nAdded);
+        unsigned int nAdded = fillRect(Rect(-100, -100, 240, 240));
     }
-    ParticleSystemQuad::update(dt);
+    
+    {
+        for (int i = 0; i < _particleCount; ++i)
+        {
+            _particleData.timeToLive[i] -= dt;
+        }
+
+        for (int i = 0; i < _particleCount; ++i)
+        {
+            if (_particleData.timeToLive[i] <= 0.0f)
+            {
+                int j = _particleCount - 1;
+                while (j > 0 && _particleData.timeToLive[j] <= 0)
+                {
+                    _particleCount--;
+                    j--;
+                }
+                _particlePhysicsData.copyParticle(i, _particleCount - 1);
+                _particlePhysicsData.curCount = _particleCount;
+                if (_batchNode)
+                {
+                    //disable the switched particle
+                    int currentIndex = _particleData.atlasIndex[i];
+                    _batchNode->disableParticle(_atlasIndex + currentIndex);
+                    _particlePhysicsData.mass[_atlasIndex + currentIndex] = 0.0;
+                    //switch indexes
+                    _particleData.atlasIndex[_particleCount - 1] = currentIndex;
+                }
+                --_particleCount;
+                if (_particleCount == 0 && _isAutoRemoveOnFinish)
+                {
+                    this->unscheduleUpdate();
+                    _parent->removeChild(this, true);
+                    return;
+                }
+            }
+        }
+
+        //color r,g,b,a
+        for (int i = 0; i < _particleCount; ++i)
+        {
+            _particleData.colorR[i] += _particleData.deltaColorR[i] * dt;
+        }
+
+        for (int i = 0; i < _particleCount; ++i)
+        {
+            _particleData.colorG[i] += _particleData.deltaColorG[i] * dt;
+        }
+
+        for (int i = 0; i < _particleCount; ++i)
+        {
+            _particleData.colorB[i] += _particleData.deltaColorB[i] * dt;
+        }
+
+        for (int i = 0; i < _particleCount; ++i)
+        {
+            _particleData.colorA[i] += _particleData.deltaColorA[i] * dt;
+        }
+
+        updateParticleQuads();
+        _transformSystemDirty = false;
+    }
+
+    // only update gl buffer when visible
+    if (_visible && !_batchNode)
+    {
+        postStep();
+    }
+
     _nFrames++;
+
+    CC_PROFILER_STOP_CATEGORY(kProfilerCategoryParticles, "ParticleSystemExtended - update");
+
 }

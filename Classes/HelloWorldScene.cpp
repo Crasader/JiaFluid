@@ -86,7 +86,6 @@ bool HelloWorld::init()
 
 	auto p = _emitter->getPosition();
 	_emitter->setPosition(Vec2(p.x, p.y));
-	_emitter->setLife(4);
 
 	auto s = Director::getInstance()->getWinSize();
 	_emitter->setPosition(Vec2(s.width / 2, s.height / 2));
