@@ -4,6 +4,7 @@
 #include "cocos2d.h"
 #include "2d/CCParticleSystemQuad.h"
 #include "SphKernel.h"
+#include "particle_data_interface.h"
 
 class ParticlePhysicsData {
 public:
@@ -50,7 +51,11 @@ private:
     bool initMass();
 };
 
-class ParticleSystemExtended : public cocos2d::ParticleSystemQuad {
+class ParticleSystemExtended : public cocos2d::ParticleSystemQuad, public ParticleDataInterface {
+public:
+    int GetNumParticles() override;
+    ParticleDataAccessors GetAccessors() override;
+
 protected:
     ParticlePhysicsData _particlePhysicsData;
     unsigned int _nFrames;

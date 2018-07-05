@@ -65,6 +65,25 @@ ParticleSystemExtended::ParticleSystemExtended() {
 
 }
 
+
+int ParticleSystemExtended::GetNumParticles() {
+    return _particleCount;
+}
+
+ParticleDataAccessors ParticleSystemExtended::GetAccessors() {
+    ParticleDataAccessors p;
+    p.pos_x = _particlePhysicsData.posx;
+    p.pos_y = _particlePhysicsData.posy;
+    p.velocity_x = _particlePhysicsData.velocityX;
+    p.velocity_y = _particlePhysicsData.velocityY;
+    p.force_x = _particlePhysicsData.forceX;
+    p.force_y = _particlePhysicsData.forceY;
+    p.density = _particlePhysicsData.density;
+    p.pressure = _particlePhysicsData.pressure;
+    p.mass = _particlePhysicsData.mass;
+    return p;
+}
+
 ParticleSystemExtended* ParticleSystemExtended::create()
 {
     ParticleSystemExtended* ret = new (std::nothrow) ParticleSystemExtended();

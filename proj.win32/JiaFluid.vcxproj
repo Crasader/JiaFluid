@@ -151,14 +151,29 @@ xcopy "$(ProjectDir)..\Resources" "$(OutDir)" /D /E /I /F /Y
     <ClCompile Include="..\Classes\AppDelegate.cpp" />
     <ClCompile Include="..\Classes\HelloWorldScene.cpp" />
     <ClCompile Include="..\Classes\ParticleSystemExtended.cpp" />
+    <ClCompile Include="..\Classes\particle_2d_solver.cpp" />
+    <ClCompile Include="..\Classes\simple_hash_neighbor_searcher_2d.cpp" />
+    <ClCompile Include="..\Classes\simple_surface_set.cpp" />
+    <ClCompile Include="..\Classes\surface_2d_line_seg.cpp" />
+    <ClCompile Include="..\Classes\wcsph_particle_2d_solver.cpp" />
     <ClCompile Include="..\Utils\utils.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\Classes\neighbor_searcher_2d_interface.h" />
+    <ClInclude Include="..\Classes\particle_2d_solver.h" />
     <ClInclude Include="..\Classes\AppDelegate.h" />
     <ClInclude Include="..\Classes\HelloWorldScene.h" />
     <ClInclude Include="..\Classes\ParticleSystemExtended.h" />
+    <ClInclude Include="..\Classes\particle_data_interface.h" />
+    <ClInclude Include="..\Classes\simple_hash_neighbor_searcher_2d.h" />
+    <ClInclude Include="..\Classes\simple_surface_set.h" />
+    <ClInclude Include="..\Classes\solver_interface.h" />
     <ClInclude Include="..\Classes\SphKernel.h" />
+    <ClInclude Include="..\Classes\surface_2d_interface.h" />
+    <ClInclude Include="..\Classes\surface_2d_line_seg.h" />
+    <ClInclude Include="..\Classes\surface_set_interface.h" />
+    <ClInclude Include="..\Classes\wcsph_particle_2d_solver.h" />
     <ClInclude Include="..\Utils\utils.h" />
     <ClInclude Include="main.h" />
   </ItemGroup>
