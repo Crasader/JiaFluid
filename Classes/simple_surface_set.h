@@ -11,7 +11,7 @@ public:
     bool GetClosestIntersection(
         Vec2 point1,
         Vec2 point2,
-        IntersectionData2* intersection) override;
+        IntersectionData2* intersection) const override;
 
 private:
     std::vector<std::unique_ptr<Surface2DInterface>> surfaces_;

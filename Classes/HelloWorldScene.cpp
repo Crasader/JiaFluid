@@ -80,7 +80,7 @@ bool HelloWorld::init()
 
     
 
-	_emitter = ParticleSystemExtended::create();
+	_emitter = ParticleSystemManager::create();
 	_emitter->retain();
 	this->addChild(_emitter, 10);
 

@@ -151,6 +151,7 @@ xcopy "$(ProjectDir)..\Resources" "$(OutDir)" /D /E /I /F /Y
     <ClCompile Include="..\Classes\AppDelegate.cpp" />
     <ClCompile Include="..\Classes\HelloWorldScene.cpp" />
     <ClCompile Include="..\Classes\particle_2d_data.cpp" />
+    <ClCompile Include="..\Classes\particle_block_spawner_2d.cpp" />
     <ClCompile Include="..\Classes\particle_system_manager.cpp" />
     <ClCompile Include="..\Classes\particle_2d_solver.cpp" />
     <ClCompile Include="..\Classes\simple_hash_neighbor_searcher_2d.cpp" />
@@ -166,6 +167,8 @@ xcopy "$(ProjectDir)..\Resources" "$(OutDir)" /D /E /I /F /Y
     <ClInclude Include="..\Classes\AppDelegate.h" />
     <ClInclude Include="..\Classes\HelloWorldScene.h" />
     <ClInclude Include="..\Classes\particle_2d_data.h" />
+    <ClInclude Include="..\Classes\particle_block_spawner_2d.h" />
+    <ClInclude Include="..\Classes\particle_spawner_2d_interface.h" />
     <ClInclude Include="..\Classes\particle_system_manager.h" />
     <ClInclude Include="..\Classes\particle_data_interface.h" />
     <ClInclude Include="..\Classes\simple_hash_neighbor_searcher_2d.h" />

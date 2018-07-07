@@ -12,9 +12,9 @@ void Paricle2DSolver::ResolveCollision(
     float *new_velocity_x,
     float *new_velocity_y) {
 
-    constexpr float resistitution_coefficient = 0.2;
-    constexpr float friction = 0.5;
-    constexpr float radius = 0.01;
+    constexpr float resistitution_coefficient = 0.2f;
+    constexpr float friction = 0.5f;
+    constexpr float radius = 0.01f;
 
     for (int i = 0; i < num_particles_; i++) {
         IntersectionData2 intersection;
@@ -44,7 +44,7 @@ void Paricle2DSolver::InitForcesByGravity(
     float *force_y,
     float *mass) {
 
-    const Vec2 gravity(0, -9.8);
+    const Vec2 gravity(0, -98);
     for (int i = 0; i < num_particles_; i++) {
         force_x[i] = gravity.x * mass[i];
         force_y[i] = gravity.y * mass[i];

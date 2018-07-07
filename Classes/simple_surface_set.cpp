@@ -3,7 +3,7 @@
 bool SimpleSurfaceSet::GetClosestIntersection(
     Vec2 point1,
     Vec2 point2,
-    IntersectionData2* intersection) {
+    IntersectionData2* intersection) const {
 
     float closest_distance = std::numeric_limits<float>::max();
     Vec2 surface_normal;

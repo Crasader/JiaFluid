@@ -8,6 +8,14 @@
 
 class Paricle2DSolver : public SolverInterface {
 protected:
+    Paricle2DSolver(
+        NeighborSearcher2DInterface *neighbor_searcher,
+        SphKernel *sph_kernel,
+        float kernel_radius) :
+        kernel_radius_(kernel_radius),
+        neighbor_searcher_(neighbor_searcher),
+        kernel_(sph_kernel) {};
+
     void ResolveCollision(
         const SurfaceSetInterface *surface_set,
         float *old_pos_x,
@@ -56,11 +64,11 @@ protected:
 
     int num_particles_;
     ParticleDataAccessors a_;
-    std::unique_ptr<NeighborSearcher2DInterface> neighbor_searcher_;
-    std::unique_ptr<SphKernel> kernel_;
+    NeighborSearcher2DInterface* neighbor_searcher_;
+    SphKernel* kernel_;
     float kernel_radius_;
     IndexLists neighbor_lists_;
-    float time_interval_ = 0.01;
+    float time_interval_;
     std::vector<float> new_pos_x_;
     std::vector<float> new_pos_y_;
     std::vector<float> new_velocity_x_;

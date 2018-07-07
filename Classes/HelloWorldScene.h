@@ -2,7 +2,7 @@
 #define __HELLOWORLD_SCENE_H__
 
 #include "cocos2d.h"
-#include "ParticleSystemExtended.h"
+#include "particle_system_manager.h"
 
 class HelloWorld : public cocos2d::Scene
 {

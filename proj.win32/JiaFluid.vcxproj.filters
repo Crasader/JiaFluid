@@ -45,6 +45,9 @@
     <ClCompile Include="..\Classes\particle_2d_data.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="..\Classes\particle_block_spawner_2d.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="main.h">
@@ -96,6 +99,12 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\Classes\particle_2d_data.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Classes\particle_spawner_2d_interface.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Classes\particle_block_spawner_2d.h">
       <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>

@@ -7,6 +7,7 @@
 class SolverInterface {
 public:
     virtual bool Solve(
+        float time_interval,
         SurfaceSetInterface* surface_set, 
         ParticleDataInterface* particle_data) = 0;
 };

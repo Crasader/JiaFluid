@@ -55,6 +55,12 @@ bool ParticleSystemManager::initWithTotalParticles(int numberOfParticles)
         pressure_ = std::make_unique<float[]>(numberOfParticles);
         mass_ = std::make_unique<float[]>(numberOfParticles);
 
+        neighbor_searcher_ = std::make_unique<SimpleHashNeighborSearcher2D>(100.0, 10.0, kernel_radius_);
+
+        solver_ = std::make_unique<WcsphParicle2DSolver>(neighbor_searcher_.get(), sph_kernel_.get(), kernel_radius_, rest_density_, 7.0, 100.0, 1.0);
+
+        surface_set_ = std::make_unique<SimpleSurfaceSet>();
+
         particle_data_extended_ = std::make_unique<Particle2DData>(
             _particleData.posx,
             _particleData.posy,
@@ -65,7 +71,11 @@ bool ParticleSystemManager::initWithTotalParticles(int numberOfParticles)
             density_.get(),
             pressure_.get(),
             mass_.get());
+        particle_data_extended_->current_count_ = 0;
         particle_data_extended_->max_count_ = numberOfParticles;
+
+        one_time_spawners_.push_back(std::make_unique<ParticleBlockSpawner2D>(
+            0.0, particle_spacing_, Rect(-100, -100, 240, 240)));
 
         // duration
         _duration = DURATION_INFINITY;
@@ -177,13 +187,27 @@ unsigned int ParticleSystemManager::fillRect(Rect rect) {
     return total;
 }
 
+void ParticleSystemManager::SpwanParticles(float dt) {
+    for (auto& spwaner : one_time_spawners_) {
+        std::vector<cocos2d::Vec2> points = spwaner->Spawn(dt);
+        for (auto& point : points) {
+            addParticle(point);
+        }
+    }
+    one_time_spawners_.clear();
+}
+
+void ParticleSystemManager::SolveParticleDynamics(float dt) {
+    solver_->Solve(dt, surface_set_.get(), particle_data_extended_.get());
+}
+
 void ParticleSystemManager::update(float dt)
 {
     CC_PROFILER_START_CATEGORY(kProfilerCategoryParticles, "ParticleSystemManager - update");
 
-    if (_nFrames == 0) {
-        unsigned int nAdded = fillRect(Rect(-100, -100, 240, 240));
-    }
+    SpwanParticles(dt);
+
+    SolveParticleDynamics(dt);
     
     {
         for (int i = 0; i < _particleCount; ++i)

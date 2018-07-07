@@ -7,6 +7,10 @@
 #include "particle_data_interface.h"
 #include "particle_2d_data.h"
 #include "solver_interface.h"
+#include "wcsph_particle_2d_solver.h"
+#include "particle_block_spawner_2d.h"
+#include "simple_surface_set.h"
+#include "simple_hash_neighbor_searcher_2d.h"
 
 #include <memory>
 
@@ -37,6 +41,8 @@ public:
 
     bool addParticle(cocos2d::Vec2 p);
     unsigned int fillRect(cocos2d::Rect rect);
+    void SpwanParticles(float dt);
+    void SolveParticleDynamics(float dt);
 
     virtual void update(float dt) override;
 
@@ -65,6 +71,9 @@ private:
     std::unique_ptr<SphKernel> sph_kernel_;
     std::unique_ptr<Particle2DData> particle_data_extended_;
     std::unique_ptr<SolverInterface> solver_;
+    std::vector<std::unique_ptr<ParticleSpawner2DInterface>> one_time_spawners_;
+    std::unique_ptr<SurfaceSetInterface> surface_set_;
+    std::unique_ptr<NeighborSearcher2DInterface> neighbor_searcher_;
 
     float particle_mass_;
     float particle_spacing_;

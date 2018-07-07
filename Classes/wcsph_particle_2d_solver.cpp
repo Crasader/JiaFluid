@@ -18,9 +18,11 @@ int WcsphParicle2DSolver::NumSubFrames(
 }
 
 bool WcsphParicle2DSolver::Solve(
+    float time_interval,
     SurfaceSetInterface* surface_set,
     ParticleDataInterface* particle_data) {
     
+    time_interval_ = time_interval;
     Reset(particle_data);
     ParticleDataAccessors a = particle_data->GetAccessors();
     int n = NumSubFrames(a.force_x, a.force_y);
@@ -35,6 +37,11 @@ bool WcsphParicle2DSolver::Solve(
         ResolveCollision(surface_set, a.pos_x, a.pos_y, new_pos_x_.data(), new_pos_y_.data(),
             new_velocity_x_.data(), new_velocity_y_.data());
 
+        memcpy(a.pos_x, new_pos_x_.data(), sizeof(float) * num_particles_);
+        memcpy(a.pos_y, new_pos_y_.data(), sizeof(float) * num_particles_);
+        memcpy(a.velocity_x, new_velocity_x_.data(), sizeof(float) * num_particles_);
+        memcpy(a.velocity_y, new_velocity_y_.data(), sizeof(float) * num_particles_);
     }
 
+    return true;
 }
