@@ -1,92 +1,17 @@
-#include "ParticleSystemExtended.h"
+#include "particle_system_manager.h"
 #include "Utils/utils.h"
 #include <string>
 
 using namespace std;
 USING_NS_CC;
 
-ParticlePhysicsData::ParticlePhysicsData()
+ParticleSystemManager::ParticleSystemManager() {
+
+}
+
+ParticleSystemManager* ParticleSystemManager::create()
 {
-    memset(this, 0, sizeof(ParticlePhysicsData));
-}
-
-bool ParticlePhysicsData::init(ParticleData* basicData, int count, float radius, float rdensity, SphKernel *kernel)
-{
-    curCount = 0;
-    maxCount = count;
-    particleSpacing = radius / 2.f;
-    kernelRadius = radius;
-    restDensity = rdensity;
-    sphKernel = kernel;
-    sphKernel->setRadius(radius);
-    basics = basicData;
-    posx = basics->posx;
-    posy = basics->posy;
-    velocityX = (float*)malloc(count * sizeof(float));
-    velocityY = (float*)malloc(count * sizeof(float));
-    forceX = (float*)malloc(count * sizeof(float));
-    forceY = (float*)malloc(count * sizeof(float));
-    density = (float*)malloc(count * sizeof(float));
-    pressure = (float*)malloc(count * sizeof(float));
-    mass = (float*)malloc(count * sizeof(float));
-
-    return velocityX && velocityY && forceX && forceY && density && pressure && mass && initMass();
-}
-
-bool ParticlePhysicsData::initMass() {
-    Rect rect(-1.5 *kernelRadius, -1.5 * kernelRadius, kernelRadius * 3, kernelRadius * 3);
-    PosArray points = fillRectWithPoints(rect, particleSpacing);
-    double maxNumParticlesPerUnitArea = 0.0;
-    for (size_t i = 0; i < points.size(); i++) {
-        double numParticlesPerUnitArea = 0.0;
-        for (size_t j = 0; j < points.size(); j++) {
-            Vec2 v = points[i] - points[j];
-            numParticlesPerUnitArea += sphKernel->value(v.length());
-        }
-        maxNumParticlesPerUnitArea = std::max(maxNumParticlesPerUnitArea, numParticlesPerUnitArea);
-    }
-
-    particleMass = restDensity / maxNumParticlesPerUnitArea;
-    return true;
-}
-
-void ParticlePhysicsData::release()
-{
-    CC_SAFE_FREE(velocityX);
-    CC_SAFE_FREE(velocityY);
-    CC_SAFE_FREE(forceX);
-    CC_SAFE_FREE(forceY);
-    CC_SAFE_FREE(density);
-    CC_SAFE_FREE(pressure);
-    CC_SAFE_FREE(sphKernel);
-}
-
-ParticleSystemExtended::ParticleSystemExtended() {
-
-}
-
-
-int ParticleSystemExtended::GetNumParticles() {
-    return _particleCount;
-}
-
-ParticleDataAccessors ParticleSystemExtended::GetAccessors() {
-    ParticleDataAccessors p;
-    p.pos_x = _particlePhysicsData.posx;
-    p.pos_y = _particlePhysicsData.posy;
-    p.velocity_x = _particlePhysicsData.velocityX;
-    p.velocity_y = _particlePhysicsData.velocityY;
-    p.force_x = _particlePhysicsData.forceX;
-    p.force_y = _particlePhysicsData.forceY;
-    p.density = _particlePhysicsData.density;
-    p.pressure = _particlePhysicsData.pressure;
-    p.mass = _particlePhysicsData.mass;
-    return p;
-}
-
-ParticleSystemExtended* ParticleSystemExtended::create()
-{
-    ParticleSystemExtended* ret = new (std::nothrow) ParticleSystemExtended();
+    ParticleSystemManager* ret = new (std::nothrow) ParticleSystemManager();
     if (ret && ret->init())
     {
         ret->autorelease();
@@ -98,9 +23,9 @@ ParticleSystemExtended* ParticleSystemExtended::create()
     return ret;
 }
 
-ParticleSystemExtended* ParticleSystemExtended::createWithTotalParticles(int numberOfParticles)
+ParticleSystemManager* ParticleSystemManager::createWithTotalParticles(int numberOfParticles)
 {
-    ParticleSystemExtended* ret = new (std::nothrow) ParticleSystemExtended();
+    ParticleSystemManager* ret = new (std::nothrow) ParticleSystemManager();
     if (ret && ret->initWithTotalParticles(numberOfParticles))
     {
         ret->autorelease();
@@ -112,11 +37,35 @@ ParticleSystemExtended* ParticleSystemExtended::createWithTotalParticles(int num
     return ret;
 }
 
-bool ParticleSystemExtended::initWithTotalParticles(int numberOfParticles)
+bool ParticleSystemManager::initWithTotalParticles(int numberOfParticles)
 {
     if (ParticleSystemQuad::initWithTotalParticles(numberOfParticles))
     {
-        _particlePhysicsData.init(&_particleData, numberOfParticles);
+        kernel_radius_ = 10.f;
+        rest_density_ = 3.f;
+        particle_spacing_ = kernel_radius_ * 0.5f;
+        sph_kernel_ = std::make_unique<SphPoly6Kernel2>(kernel_radius_);
+        particle_mass_ = InitMass(kernel_radius_, particle_spacing_, rest_density_, sph_kernel_.get());
+
+        velocity_x_ = std::make_unique<float[]>(numberOfParticles);
+        velocity_y_ = std::make_unique<float[]>(numberOfParticles);
+        force_x_ = std::make_unique<float[]>(numberOfParticles);
+        force_y_ = std::make_unique<float[]>(numberOfParticles);
+        density_ = std::make_unique<float[]>(numberOfParticles);
+        pressure_ = std::make_unique<float[]>(numberOfParticles);
+        mass_ = std::make_unique<float[]>(numberOfParticles);
+
+        particle_data_extended_ = std::make_unique<Particle2DData>(
+            _particleData.posx,
+            _particleData.posy,
+            velocity_x_.get(),
+            velocity_y_.get(),
+            force_x_.get(),
+            force_y_.get(),
+            density_.get(),
+            pressure_.get(),
+            mass_.get());
+        particle_data_extended_->max_count_ = numberOfParticles;
 
         // duration
         _duration = DURATION_INFINITY;
@@ -196,8 +145,8 @@ bool ParticleSystemExtended::initWithTotalParticles(int numberOfParticles)
     return false;
 }
 
-bool ParticleSystemExtended::addParticle(Vec2 p) {
-    if (_particlePhysicsData.curCount >= _particlePhysicsData.maxCount) {
+bool ParticleSystemManager::addParticle(Vec2 p) {
+    if (particle_data_extended_->current_count_ >= particle_data_extended_->max_count_) {
         return false;
     }
 
@@ -205,22 +154,22 @@ bool ParticleSystemExtended::addParticle(Vec2 p) {
     _particleData.posx[_particleCount - 1] = p.x;
     _particleData.posy[_particleCount - 1] = p.y;
     
-    _particlePhysicsData.velocityX[_particleCount - 1] = 0;
-    _particlePhysicsData.velocityY[_particleCount - 1] = 0;
-    _particlePhysicsData.forceX[_particleCount - 1] = 0;
-    _particlePhysicsData.forceY[_particleCount - 1] = 0;
-    _particlePhysicsData.density[_particleCount - 1] = 0;
-    _particlePhysicsData.pressure[_particleCount - 1] = 0;
-    _particlePhysicsData.mass[_particleCount - 1] = _particlePhysicsData.particleMass;
-    _particlePhysicsData.curCount = _particleCount;
+    velocity_x_[_particleCount - 1] = 0;
+    velocity_y_[_particleCount - 1] = 0;
+    force_x_[_particleCount - 1] = 0;
+    force_y_[_particleCount - 1] = 0;
+    density_[_particleCount - 1] = 0;
+    pressure_[_particleCount - 1] = 0;
+    mass_[_particleCount - 1] = particle_mass_;
+    particle_data_extended_->current_count_ = _particleCount;
     return true;
 }
 
 
-unsigned int ParticleSystemExtended::fillRect(Rect rect) {
-    auto points = fillRectWithPoints(rect, _particlePhysicsData.particleSpacing);
+unsigned int ParticleSystemManager::fillRect(Rect rect) {
+    auto points = fillRectWithPoints(rect, particle_spacing_);
     unsigned int total = 0;
-    for (size_t i = 0, j = _particlePhysicsData.curCount; i < points.size(); i++) {
+    for (size_t i = 0; i < points.size(); i++) {
         if (addParticle(points[i])) {
             total++;
         }
@@ -228,9 +177,9 @@ unsigned int ParticleSystemExtended::fillRect(Rect rect) {
     return total;
 }
 
-void ParticleSystemExtended::update(float dt)
+void ParticleSystemManager::update(float dt)
 {
-    CC_PROFILER_START_CATEGORY(kProfilerCategoryParticles, "ParticleSystemExtended - update");
+    CC_PROFILER_START_CATEGORY(kProfilerCategoryParticles, "ParticleSystemManager - update");
 
     if (_nFrames == 0) {
         unsigned int nAdded = fillRect(Rect(-100, -100, 240, 240));
@@ -252,14 +201,14 @@ void ParticleSystemExtended::update(float dt)
                     _particleCount--;
                     j--;
                 }
-                _particlePhysicsData.copyParticle(i, _particleCount - 1);
-                _particlePhysicsData.curCount = _particleCount;
+                copyParticle(i, _particleCount - 1);
+                particle_data_extended_->current_count_ = _particleCount;
                 if (_batchNode)
                 {
                     //disable the switched particle
                     int currentIndex = _particleData.atlasIndex[i];
                     _batchNode->disableParticle(_atlasIndex + currentIndex);
-                    _particlePhysicsData.mass[_atlasIndex + currentIndex] = 0.0;
+                    mass_[_atlasIndex + currentIndex] = 0.0;
                     //switch indexes
                     _particleData.atlasIndex[_particleCount - 1] = currentIndex;
                 }
@@ -306,6 +255,6 @@ void ParticleSystemExtended::update(float dt)
 
     _nFrames++;
 
-    CC_PROFILER_STOP_CATEGORY(kProfilerCategoryParticles, "ParticleSystemExtended - update");
+    CC_PROFILER_STOP_CATEGORY(kProfilerCategoryParticles, "ParticleSystemManager - update");
 
 }

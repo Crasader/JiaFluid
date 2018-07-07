@@ -88,3 +88,20 @@ PosArray fillRectWithPoints(cocos2d::Rect rect, double spacing) {
     }
     return points;
 }
+
+float InitMass(float kernelRadius, float particleSpacing, float restDensity, SphKernel *sphKernel) {
+    Rect rect(-1.5 *kernelRadius, -1.5 * kernelRadius, kernelRadius * 3, kernelRadius * 3);
+    PosArray points = fillRectWithPoints(rect, particleSpacing);
+    double maxNumParticlesPerUnitArea = 0.0;
+    for (size_t i = 0; i < points.size(); i++) {
+        double numParticlesPerUnitArea = 0.0;
+        for (size_t j = 0; j < points.size(); j++) {
+            Vec2 v = points[i] - points[j];
+            numParticlesPerUnitArea += sphKernel->value(v.length());
+        }
+        maxNumParticlesPerUnitArea = std::max(maxNumParticlesPerUnitArea, numParticlesPerUnitArea);
+    }
+
+    const float particleMass = restDensity / maxNumParticlesPerUnitArea;
+    return particleMass;
+}
